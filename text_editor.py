@@ -1,51 +1,70 @@
 #coding=utf-8 
 import sys,os,tkFileDialog
 from Tkinter import *
-
+import re
 #by xtstc
 class Editor(object):
 	"""docstring for Editor"""
 	def __init__(self):
 		self.tk = Tk()
-
+		# 设置窗口初始化大小
+		self.tk.geometry('960x540')
 		self.createUI()
+		self.bind_key()
+		# 进入主循环
 		self.tk.mainloop()
 	def createUI(self):
 		self.tk.title("XtStC Text Enditor")
 		menubar = Menu(self.tk)
 		fmenu = Menu (menubar,tearoff = 0)
 		Emenu = Menu(menubar ,tearoff = 0)
-		#File选项
-		fmenu.add_command(label = 'Open',command = self.open)
-		fmenu.add_command(label = 'Save',command = self.save)
-		fmenu.add_command(label = 'Exit',command = self.exit)
+		# File选项
+		fmenu.add_command(label = 'Open',accelerator='Command+O',command = self.open)
+		fmenu.add_command(label = 'Save',accelerator = 'Command+S',command = self.save)
+		fmenu.add_command(label = 'Exit',accelerator ='Command+Q',command = self.exit)
 		menubar.add_cascade(label = "File",menu = fmenu)
-		#Edit选项
-		Emenu.add_command(label = 'Format')
-		Emenu.add_command(label = 'Statics')
+		# Edit选
+		Emenu.add_command(label = 'Format',command = self.format)
+		Emenu.add_command(label = 'Statics',command = self.Statics)
 		Emenu.add_command(label = 'Find & Replace')
 		Emenu.add_command(label = 'Sort')
 		menubar.add_cascade(label = "Edit",menu = Emenu)
 		
+		#加入文本框，并让其与滚动条绑定
 		self.tk.config(menu = menubar)
-		self.text = Text(bg = 'black' , fg = 'white')
+		self.text = Text(bg = 'black' , fg = 'white',insertbackground = 'white')
 		#self.text.grid(sticky = N+E+S+W)
-		#self.scorollbar = Scrollbar(self.text)
-		#self.scorollbar.pack(side = RIGHT,fill = Y)
-		#self.scorollbar.config(command = self.text.yview)
-		#self.text.config(yscrollcommand=self.scorollbar.set)
-		self.text.pack(expand = YES,fill = BOTH)
+		self.scorollbar = Scrollbar(self.text)
+
+		self.scorollbar.pack(side = RIGHT,fill = Y)
+		self.text["yscrollcommand"] = self.scorollbar.set
+		self.scorollbar.config(command = self.text.yview)
 		
-	def save(self):
+		#(expand = YES,fill = BOTH),pack的这个参数，让文本框可以随窗口大小变化
+		self.text.pack(expand = YES,fill = BOTH)
+	
+	#类的成员函数
+	#
+	#绑定键盘到tk，实现快捷键功能
+	def bind_key(self):
+		self.tk.bind('<Command-o>',self.open)
+		self.tk.bind('<Command-s>',self.save)
+	#File菜单的函数
+	def save(self,event = None):
 		txtContent = self.text.get(1.0,END)
 		self.SaveFile(content = txtContent)
-	def open(self):
+	def open(self,event = None):
 		self.filename = tkFileDialog.askopenfilename(initialdir  = os.getcwd())
 		fileContent = self.OpenFile(fname = self.filename)
 		if fileContent is not -1:
 			self.text.delete(1.0,END)
 			self.text.insert(1.0,fileContent)
-
+	#Edit菜单的函数
+	def format(self):
+		FormatContent = self.text.get(1.0,END)
+		result = ' '.join(FormatContent.split())
+		self.text.delete(1.0,END)
+		self.text.insert(1.0,result)
 
 	def OpenFile(self,fname = None):
 		if fname is None:
@@ -63,7 +82,20 @@ class Editor(object):
 		file.flush()
 		file.close()
 		return 0
-	def exit():
+	def Statics(self):
+		StaticsContent = self.text.get(1.0,END)
+		StaticsContent = StaticsContent.lower()
+		StaticsContent = re.sub("\"|,|\.","",StaticsContent)
+		result = {}
+		for word in StaticsContent.split():
+			if word not in result:
+				result[word] = 0
+			result[word] += 1
+		#print result 
+		return result
+
+
+	def exit(self):
 		os._exit(0)
 if  __name__ == '__main__':
 	Editor()
