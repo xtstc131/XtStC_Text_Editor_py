@@ -1,10 +1,11 @@
 #coding=utf-8
 import sys,os,tkFileDialog
-from Tkinter import *
 import tkMessageBox
 import re
+import time
 from tkSimpleDialog import *
 from ScrolledText import *
+from Tkinter import *
 #by xtstc
 class Editor(object):
 	"""docstring for Editor"""
@@ -45,7 +46,8 @@ class Editor(object):
 		Emenu.add_command(label = 'Format',accelerator = 'Command+F',command = self.format)
 		Emenu.add_command(label = 'Statics',command = self.statics)
 		Emenu.add_command(label = 'Find & Replace' ,command = self.find_replace)
-		Emenu.add_command(label = 'Sort')
+		Emenu.add_command(label = 'Sort',command = self.sort)
+		Emenu.add_command(label = 'Extract',command = self.extract)
 		menubar.add_cascade(label = "Edit",menu = Emenu)
 
 		#加入文本框，并让其与滚动条绑定
@@ -119,21 +121,45 @@ class Editor(object):
 		self.tl  =Toplevel()
 		self.tl.title('Find&Replace')
 		label = Label(self.tl, text='Please Input')
-		self.entry = Entry(self.tl)
-		self.entry.pack()
-		self.entry.focus()
+		self.entry_1 = Entry(self.tl)
+		self.entry_2 = Entry(self.tl)
+		self.entry_1.pack()
+		self.entry_2.pack()
+		self.entry_1.focus()
+		self.entry_2.focus()
 		button_f =  Button(self.tl, text='Find',command=self.Find)
 		button_fn = Button(self.tl, text='Find Next',command=self.FindNext)
 		button_fa = Button(self.tl,text = 'Find All',command = self.FindALL)
 		button_NOF = Button(self.tl, text='NumoF',command=self.get_find_num)
-		button_r = Button(self.tl, text = 'Replace')
+		button_r = Button(self.tl, text = 'Replace',command = self.Replace)
 		button_f.pack(side  = 'bottom')
 		button_fn.pack(side = 'bottom')
 		button_NOF.pack(side  =  'bottom')
 		button_fa.pack(side = 'bottom')
-
-
-
+		button_r.pack(side = 'bottom')
+	#提取所有不重复单词并存为txt文件
+	def extract(self):
+		word_list = self.get_every_single_word()
+		time_str =  self.get_time()
+		file_p = open("extract"+"-"+time_str+"."+"txt",'w+')
+		for word in word_list:
+			file_p.write(word)
+			file_p.write("\n")
+		file_p.close()
+	def sort(self):
+		word_list = self.get_every_single_word()
+		word_len_dic = {word:len(word) for  word in word_list}
+		#print word_len
+		d = sorted(word_len_dic.iteritems(),key = lambda t:t[1],reverse = True)
+		#print 
+		#print word_len_str
+		time_str = self.get_time()
+		file_p = open("sort"+"-"+time_str+"."+"txt",'w+')
+		for word in d:
+			Wstr = word[0]
+			file_p.write(Wstr)
+			file_p.write("\n")
+		file_p.close()
 	#open函数的细节函数
 	def OpenFile(self,fname = None):
 		if fname is None:
@@ -152,6 +178,7 @@ class Editor(object):
 		file.flush()
 		file.close()
 		return 0
+	
 	def Statics(self):
 		StaticsContent = self.text.get(1.0,END)
 		StaticsContent = StaticsContent.lower()
@@ -164,6 +191,7 @@ class Editor(object):
 		#print result
 		d = sorted(result.iteritems(),key = lambda t:t[1],reverse = True)
 		return d,result
+	
 	def Find(self,result = None,index = None):
 
 		global j
@@ -172,12 +200,12 @@ class Editor(object):
 		else:
 			j = '0.0'
 
-		result = self.entry.get()
+		result = self.entry_1.get()
 		global lastTarget
 		lastTarget = result
 		if  lastTarget:
 			where = self.text.search(lastTarget,j,END)
-			print where
+			#print where
 			if where:
 				st,ch = where.split('.')
 				_ch = int(ch) + (len(lastTarget))
@@ -187,14 +215,17 @@ class Editor(object):
 		else:
 			tkMessageBox.showinfo(title = 'Information', message = 'Word was not found.')
 		return result
+	
 	def FindNext(self):
 		self.Find(lastTarget,j)
-		self.text.tag_delete(SEL)
+	
 	def FindALL(self):
+		self.Find()
 		i  = 1
-		while i<100000:
+		while i<1000:
 			self.FindNext()
 			i += 1
+	
 	def get_find_num(self):
 		x,worddic= self.Statics()
 		result = self.Find()
@@ -202,7 +233,34 @@ class Editor(object):
 		tkMessageBox.showinfo(title = 'Information', message = result+':'+str(num))
 
 	def Replace(self):
-		pass
+		find_word = self.entry_1.get()
+		replace_word = self.entry_2.get()
+		replace_result = self.text.get(1.0,END)
+		replace_result = replace_result.lower()
+		replace_result = re.sub('[^a-zA-Z\s]'," ",replace_result).split()
+		#print replace_result
+		
+		for word in replace_result:
+			if word == find_word:
+				x = replace_result.index(word)
+				replace_result[x] = replace_word
+		result = " ".join(replace_result)
+		self.text.delete(1.0,END)
+		self.text.insert(1.0,result)
+	def get_every_single_word(self):
+		word_list = []
+		result = self.text.get(1.0,END)
+		result = result.lower()
+		result = re.sub('[^a-zA-Z\s]'," ",result)
+		result = result.split()
+		for word in result:
+			if word not in word_list:
+				word_list.append(word)
+		return word_list
+	def  get_time(self):
+		ISOTIMEFORMAT='%Y-%m-%d-%X'
+		time_str =  time.strftime( ISOTIMEFORMAT, time.localtime() )
+		return time_str 
 	def exit(self):
 		os._exit(0)
 if  __name__ == '__main__':
