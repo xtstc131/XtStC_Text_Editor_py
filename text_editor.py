@@ -69,21 +69,24 @@ class Editor(object):
 	#
 	#绑定键盘到tk，实现快捷键功能
 	def bind_key(self):
+		#打开文件快捷键
 		self.tk.bind('<Command-o>',self.open)
 		self.tk.bind('<Command-O>',self.open)
-
+		#保存文件快捷键
 		self.tk.bind('<Command-s>',self.save)
 		self.tk.bind('<Command-S>',self.save)
-
+		#format快捷键
 		self.tk.bind('<Command-f>',self.format)
 		self.tk.bind('<Command-F>',self.format)
-
+		#全选快捷键
 		self.tk.bind('<Command-a>',self.select_all)
 		self.tk.bind('<Command-A>',self.select_all)
 	#File菜单的函数
+	#保存
 	def save(self,event = None):
 		txtContent = self.text.get(1.0,END)
 		self.SaveFile(content = txtContent)
+	#打开文件
 	def open(self,event = None):
 		self.filename = tkFileDialog.askopenfilename(initialdir  = os.getcwd())
 		fileContent = self.OpenFile(fname = self.filename)
@@ -97,19 +100,21 @@ class Editor(object):
 		result = ' '.join(FormatContent.split())
 		self.text.delete(1.0,END)
 		self.text.insert(1.0,result)
-
+	###
+	#未完成的撤销和取消撤销功能
+	###
 	#def redo(self,event = None):
 		#self.text.edit_redo()
 	#def undo(self,event = None):
 		#self.text.edit_undo()
-			
+		#全选功能
 	def select_all(self ,event = None):
 		self.text.tag_add(SEL,'1.0',END+'-1c')
+		
 		#下面这两句我也不知道要什么。。。注释掉，这个函数暂时没发现问题
 		#self.text.mark_set(INSERT,'1.0')
 		#self.text.see(INSERT)
-
-
+	#statics实现
 	def statics(self,event = None):
 		staticsContent,result =  self.Statics()
 		maxWord = staticsContent[0][0]
@@ -117,6 +122,7 @@ class Editor(object):
 		MaxNum = staticsContent[0][1]
 		MinNum = staticsContent[-1][1]
 		tkMessageBox.showinfo("Statics Result",'MAX  ==>  '+maxWord+':'+str(MaxNum)+'\n\n'+'MIN  ==>  '+minWord+':'+str(MinNum))
+	#找到与替换功能实现
 	def find_replace(self):
 		self.tl  =Toplevel()
 		self.tl.title('Find&Replace')
@@ -146,6 +152,7 @@ class Editor(object):
 			file_p.write(word)
 			file_p.write("\n")
 		file_p.close()
+	#按照单词长度排序并且存为txt文件
 	def sort(self):
 		word_list = self.get_every_single_word()
 		word_len_dic = {word:len(word) for  word in word_list}
@@ -160,6 +167,11 @@ class Editor(object):
 			file_p.write(Wstr)
 			file_p.write("\n")
 		file_p.close()
+	
+
+#主要功能函数的细节函数
+#########################
+
 	#open函数的细节函数
 	def OpenFile(self,fname = None):
 		if fname is None:
@@ -178,7 +190,7 @@ class Editor(object):
 		file.flush()
 		file.close()
 		return 0
-	
+	#static的细节函数
 	def Statics(self):
 		StaticsContent = self.text.get(1.0,END)
 		StaticsContent = StaticsContent.lower()
@@ -191,7 +203,7 @@ class Editor(object):
 		#print result
 		d = sorted(result.iteritems(),key = lambda t:t[1],reverse = True)
 		return d,result
-	
+#下面的Find Findnext  FindAll get_find_number 都是find&replace的实现细节函数
 	def Find(self,result = None,index = None):
 
 		global j
@@ -229,7 +241,7 @@ class Editor(object):
 	def get_find_num(self):
 		x,worddic= self.Statics()
 		result = self.Find()
-		num = worddic[result]
+		num = word_len_dic[result]
 		tkMessageBox.showinfo(title = 'Information', message = result+':'+str(num))
 
 	def Replace(self):
@@ -247,6 +259,8 @@ class Editor(object):
 		result = " ".join(replace_result)
 		self.text.delete(1.0,END)
 		self.text.insert(1.0,result)
+	
+#找到每一个单词，存入list，并且反回list
 	def get_every_single_word(self):
 		word_list = []
 		result = self.text.get(1.0,END)
@@ -257,11 +271,15 @@ class Editor(object):
 			if word not in word_list:
 				word_list.append(word)
 		return word_list
+#获取时间字符串，并且反回该字符串
 	def  get_time(self):
 		ISOTIMEFORMAT='%Y-%m-%d-%X'
 		time_str =  time.strftime( ISOTIMEFORMAT, time.localtime() )
 		return time_str 
 	def exit(self):
 		os._exit(0)
+###################################
+#
+#          主函数
 if  __name__ == '__main__':
 	Editor()
